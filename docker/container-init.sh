@@ -1,9 +1,6 @@
 #!/bin/bash
 
 # Start the first process
-/sbin/init &
-
-# Start the second process
 rc-service chinachu-operator start
 rc-service chinachu-wui start
 
