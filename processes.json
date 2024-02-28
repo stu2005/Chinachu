@@ -3,11 +3,10 @@
     {
       "name": "chinachu-wui",
       "script": "app-wui.js",
-      "node_args" : "",
       "error_file": "./log/chinachu-wui.stderr.log",
       "out_file": "./log/chinachu-wui.stdout.log",
       "merge_logs": true,
-      "pid_file": "/var/run/chinachu-wui.pid",
+      "pid_file": "./run/chinachu-wui.pid",
       "exec_mode": "fork",
       "autorestart": true,
       "env": {
@@ -19,11 +18,10 @@
     {
       "name": "chinachu-operator",
       "script": "app-operator.js",
-      "node_args" : "",
       "error_file": "./log/chinachu-operator.stderr.log",
       "out_file": "./log/chinachu-operator.stdout.log",
       "merge_logs": true,
-      "pid_file": "/var/run/chinachu-operator.pid",
+      "pid_file": "./run/chinachu-operator.pid",
       "exec_mode": "fork",
       "autorestart": true,
       "env": {
