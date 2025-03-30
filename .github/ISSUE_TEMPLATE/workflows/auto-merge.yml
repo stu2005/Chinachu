@@ -1,0 +1,64 @@
+name: Dependabot Auto Merge
+
+on:
+  push:
+  pull_request_target: # pull_request ではなく pull_request_target を使うことで、より安全に secrets や github.token を扱えます
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled # ラベル操作でもトリガーする場合
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    # Dependabot によって作成された PR のみを対象にする
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Checkout code (必要な場合)
+        # このワークフローでコード自体を操作しない場合は不要なこともあります
+        uses: actions/checkout@v4
+
+      # (オプション) 特定のラベルが付いている場合のみ実行する
+      # - name: Check for automerge label
+      #   if: contains(github.event.pull_request.labels.*.name, 'automerge') # 'automerge' ラベルが付いているかチェック
+      #   run: echo "Automerge label found."
+      #   # このステップが失敗すると以降は実行されないので、条件分岐として使える
+
+      # Dependabot のメタデータを取得 (アップデートの種類などを知るため)
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}" # デフォルトのトークンでOK
+
+      # CI/テストの完了を待つ (オプションだが強く推奨)
+      # リポジトリの Status Check の設定に依存します。
+      # 確実に待つには、チェック名を指定するか、より複雑なAPIコールが必要です。
+      # ここでは簡易的に mergeable_state をチェックします (CI完了前に 'clean' になる可能性あり注意)
+      - name: Wait for status checks
+        id: wait_for_checks
+        # timeout-minutes はリポジトリのCI実行時間に合わせて調整
+        run: |
+          gh pr checks ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --watch --required --timeout 5m --interval 10
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }} # GitHub CLI にトークンを渡す
+
+      # 条件に基づいて自動承認とマージを行う
+      - name: Approve and merge
+        # 以下の条件をすべて満たす場合に実行
+        # - Dependabot metadata が取得できた
+        # - アップデートタイプが patch または minor (メジャーアップデートは除く)
+        # - CIが成功している (上記 wait_for_checks が成功した場合)
+        if: |
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+          # && contains(github.event.pull_request.labels.*.name, 'automerge') # ラベル条件を追加する場合
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          gh pr review --approve "$PR_URL"
+          # マージ戦略を --squash, --rebase, --merge から選ぶ
+          gh pr merge --auto --squash "$PR_URL"
+          echo "Approved and enabled auto-merge for PR: $PR_URL"
