@@ -50,10 +50,7 @@ jobs:
         # - Dependabot metadata が取得できた
         # - アップデートタイプが patch または minor (メジャーアップデートは除く)
         # - CIが成功している (上記 wait_for_checks が成功した場合)
-        if: |
-          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
-          steps.metadata.outputs.update-type == 'version-update:semver-minor'
-          # && contains(github.event.pull_request.labels.*.name, 'automerge') # ラベル条件を追加する場合
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
