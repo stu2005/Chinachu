@@ -40,7 +40,7 @@ jobs:
         id: wait_for_checks
         # timeout-minutes はリポジトリのCI実行時間に合わせて調整
         run: |
-          gh pr checks ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --watch --required --timeout 5m --interval 10
+          timeout 5m gh pr checks ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --watch --required --interval 10
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }} # GitHub CLI にトークンを渡す
 
